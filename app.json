@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "CareMate AI",
+    "slug": "caremate",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0b1220"
+    },
+    "ios": {
+      "bundleIdentifier": "com.caremate.app",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.caremate.app"
+    }
+  }
+}
