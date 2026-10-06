@@ -50,6 +50,11 @@ export const id: Record<string, string> = {
   "create.assumed": "Asumsi",
   "create.assumedFrom": "Dari: {from}",
   "create.empty": "Isi dulu teksnya, lalu tekan tombol AI",
+  "create.voiceStart": "Bicara saja",
+  "create.voiceListening": "Mendengarkan…",
+  "create.voiceStop": "Berhenti",
+  "create.voiceUnsupported": "Perangkat ini tidak mendukung input suara, silakan ketik langsung",
+  "create.voiceError": "Pengenalan suara gagal, coba lagi atau ketik langsung",
 
   "field.time": "Waktu",
   "field.category": "Jenis",

@@ -50,6 +50,11 @@ export const zhHant: Record<string, string> = {
   "create.assumed": "假設",
   "create.assumedFrom": "來源：{from}",
   "create.empty": "請先輸入內容，再按「AI 整理」",
+  "create.voiceStart": "用說的",
+  "create.voiceListening": "聆聽中…",
+  "create.voiceStop": "停止",
+  "create.voiceUnsupported": "此裝置不支援語音輸入，請直接打字",
+  "create.voiceError": "語音辨識失敗，請再試一次或直接打字",
 
   "field.time": "時間",
   "field.category": "類型",

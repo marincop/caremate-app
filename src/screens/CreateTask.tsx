@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,6 +10,13 @@ import {
 } from "react-native";
 
 import { useI18n } from "../i18n";
+import {
+  ensureSpeechReady,
+  isSpeechAvailable,
+  speechLangFor,
+  startListening,
+  stopListening,
+} from "../services/speech";
 import { localMock, parseTasks } from "../services/taskParser";
 import { useApp } from "../store";
 import { colors, font, radius, space } from "../theme";
@@ -18,7 +25,7 @@ import type { Task } from "../types";
 const SAMPLE = "早上八點提醒阿嬤吃血壓藥一顆，中午要量血壓，晚上睡前吃血糖藥";
 
 export default function CreateTask() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { elder, addTasks } = useApp();
   const [input, setInput] = useState(SAMPLE);
   // Start with a demo parse so the screen is never a large empty area.
@@ -26,6 +33,69 @@ export default function CreateTask() {
   const [isDemo, setIsDemo] = useState(true);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [voiceReady, setVoiceReady] = useState<boolean>(() => isSpeechAvailable());
+  const [listening, setListening] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  // Ref (not state) so a rapid double tap can never read a stale value.
+  const listeningRef = useRef(false);
+
+  useEffect(() => {
+    let alive = true;
+    ensureSpeechReady()
+      .then((ok) => {
+        if (alive) setVoiceReady(ok);
+      })
+      .catch(() => {
+        if (alive) setVoiceReady(false);
+      });
+    return () => {
+      alive = false;
+      listeningRef.current = false;
+      stopListening();
+    };
+  }, []);
+
+  async function onVoicePress() {
+    if (!voiceReady) return;
+
+    if (listeningRef.current) {
+      listeningRef.current = false;
+      stopListening();
+      setListening(false);
+      return;
+    }
+
+    setVoiceError(null);
+    setToast(null);
+    listeningRef.current = true;
+    setListening(true);
+
+    const finish = (text: string) => {
+      listeningRef.current = false;
+      setListening(false);
+      // Empty text = stopped without recognizing anything: keep what is typed.
+      if (text) setInput(text);
+    };
+
+    try {
+      await startListening({
+        lang: speechLangFor(lang),
+        onPartial: (text) => {
+          if (text) setInput(text);
+        },
+        onFinal: finish,
+        onError: () => {
+          listeningRef.current = false;
+          setListening(false);
+          setVoiceError(t("create.voiceError"));
+        },
+      });
+    } catch {
+      listeningRef.current = false;
+      setListening(false);
+      setVoiceError(t("create.voiceError"));
+    }
+  }
 
   async function onParse() {
     const text = input.trim();
@@ -66,6 +136,32 @@ export default function CreateTask() {
           multiline
           style={styles.input}
         />
+
+        <View style={styles.voiceRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={listening ? t("create.voiceStop") : t("create.voiceStart")}
+            onPress={onVoicePress}
+            disabled={!voiceReady}
+            style={[
+              styles.micBtn,
+              listening ? styles.micBtnListening : null,
+              !voiceReady ? styles.micBtnDisabled : null,
+            ]}
+          >
+            <Text style={styles.micIcon}>🎤</Text>
+          </Pressable>
+
+          <Text style={[styles.micLabel, listening ? styles.micLabelListening : null]}>
+            {listening ? t("create.voiceListening") : t("create.voiceStart")}
+          </Text>
+
+          {!voiceReady ? (
+            <Text style={styles.micHint}>{t("create.voiceUnsupported")}</Text>
+          ) : null}
+
+          {voiceError ? <Text style={styles.voiceErrorText}>{voiceError}</Text> : null}
+        </View>
       </View>
 
       <Pressable style={styles.primaryBtn} onPress={onParse} disabled={loading}>
@@ -175,6 +271,42 @@ const styles = StyleSheet.create({
     fontSize: font.lg,
     minHeight: 110,
     textAlignVertical: "top",
+  },
+  voiceRow: { alignItems: "center", marginTop: space.md },
+  micBtn: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  micBtnListening: { backgroundColor: colors.danger, opacity: 0.85 },
+  micBtnDisabled: { backgroundColor: colors.border, opacity: 0.5 },
+  micIcon: { fontSize: 28 },
+  micLabel: {
+    color: colors.primary,
+    fontSize: font.sm,
+    fontWeight: "700",
+    marginTop: space.sm,
+    textAlign: "center",
+  },
+  micLabelListening: { color: colors.danger },
+  micHint: {
+    flexShrink: 1,
+    flexWrap: "wrap",
+    color: colors.muted,
+    fontSize: font.xs,
+    marginTop: space.xs,
+    textAlign: "center",
+  },
+  voiceErrorText: {
+    flexShrink: 1,
+    flexWrap: "wrap",
+    color: colors.danger,
+    fontSize: font.sm,
+    marginTop: space.xs,
+    textAlign: "center",
   },
   primaryBtn: {
     backgroundColor: colors.primary,

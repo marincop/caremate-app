@@ -50,6 +50,11 @@ export const vi: Record<string, string> = {
   "create.assumed": "Giả định",
   "create.assumedFrom": "Từ: {from}",
   "create.empty": "Nhập nội dung trước rồi bấm AI",
+  "create.voiceStart": "Nói",
+  "create.voiceListening": "Đang nghe…",
+  "create.voiceStop": "Dừng",
+  "create.voiceUnsupported": "Thiết bị này không hỗ trợ nhập bằng giọng nói, vui lòng gõ trực tiếp",
+  "create.voiceError": "Nhận dạng giọng nói thất bại, vui lòng thử lại hoặc gõ trực tiếp",
 
   "field.time": "Thời gian",
   "field.category": "Loại",
